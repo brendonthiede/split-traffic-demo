@@ -32,9 +32,6 @@ linkerd viz check
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Configuring the ingress controller for linkerd"
 kubectl get deployment nginx-ingress-ingress-nginx-controller -n default -o yaml | linkerd inject --ingress - | kubectl apply --record=true -f -
 
-echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Installing Flagger"
-kustomize build github.com/fluxcd/flagger/kustomize/linkerd | kubectl apply --record=true -f -
-
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Setting up the split-test namespace"
 cat <<EOF | kubectl apply --record=true -f -
 apiVersion: v1
@@ -83,34 +80,4 @@ spec:
     weight: 333m
   - service: ui-v3-split-test-ui
     weight: 333m
-EOF
-
-echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Setting up canary deployment"
-cat <<EOF | kubectl apply -f -
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: podinfo
-  namespace: split-test
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ui-v1-split-test-ui
-  service:
-    port: 443
-  analysis:
-    interval: 10s
-    threshold: 5
-    stepWeight: 10
-    maxWeight: 100
-    metrics:
-    - name: request-success-rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-    - name: request-duration
-      thresholdRange:
-        max: 500
-      interval: 1m
 EOF
