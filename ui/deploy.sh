@@ -3,17 +3,13 @@
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Installing linkerd Kubernetes objects"
-linkerd install --disable-heartbeat --ha --registry=docker-virtual.artifactory.renhsc.com/linkerd | sed -E 's/image: (cr.l5d.io\/|(prom\/))/image: docker-virtual.artifactory.renhsc.com\/\2/g' | kubectl apply --record=true -f -
+linkerd install --disable-heartbeat --ha --registry=docker-virtual.artifactory.renhsc.com/linkerd | kubectl apply --record=true -f -
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Adding label to kube-system"
 cat <<EOF | kubectl apply --record=true -f -
 apiVersion: v1
 kind: Namespace
 metadata:
   name: kube-system
-  annotations:
-    config.linkerd.io/debug-image: docker-virtual.artifactory.renhsc.com/linkerd/debug
-    config.linkerd.io/init-image: docker-virtual.artifactory.renhsc.com/linkerd/proxy-init
-    config.linkerd.io/proxy-image: docker-virtual.artifactory.renhsc.com/linkerd/proxy
   labels:
     config.linkerd.io/admission-webhooks: disabled
 EOF
@@ -26,21 +22,18 @@ kind: Namespace
 metadata:
   name: linkerd-viz
   annotations:
-    config.linkerd.io/debug-image: docker-virtual.artifactory.renhsc.com/linkerd/debug
-    config.linkerd.io/init-image: docker-virtual.artifactory.renhsc.com/linkerd/proxy-init
-    config.linkerd.io/proxy-image: docker-virtual.artifactory.renhsc.com/linkerd/proxy
     linkerd.io/inject: enabled
 EOF
 
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Installing viz components"
-linkerd viz install | sed -E 's/image: (cr.l5d.io\/|(prom\/))/image: docker-virtual.artifactory.renhsc.com\/\2/g' | kubectl apply --record=true -f -
+linkerd viz install | kubectl apply --record=true -f -
 linkerd viz check
 
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Configuring the ingress controller for linkerd"
 kubectl get deployment nginx-ingress-ingress-nginx-controller -n default -o yaml | linkerd inject --ingress - | kubectl apply --record=true -f -
 
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Installing Flagger"
-kustomize build github.com/fluxcd/flagger/kustomize/linkerd | sed 's/ghcr\.io/docker-virtual.artifactory.renhsc.com/g' | kubectl apply --record=true -f -
+kustomize build github.com/fluxcd/flagger/kustomize/linkerd | kubectl apply --record=true -f -
 
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Setting up the split-test namespace"
 cat <<EOF | kubectl apply --record=true -f -
@@ -49,9 +42,6 @@ kind: Namespace
 metadata:
   name: split-test
   annotations:
-    config.linkerd.io/debug-image: docker-virtual.artifactory.renhsc.com/linkerd/debug
-    config.linkerd.io/init-image: docker-virtual.artifactory.renhsc.com/linkerd/proxy-init
-    config.linkerd.io/proxy-image: docker-virtual.artifactory.renhsc.com/linkerd/proxy
     linkerd.io/inject: enabled
 EOF
 
