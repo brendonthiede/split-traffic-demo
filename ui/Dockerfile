@@ -1,4 +1,4 @@
-FROM docker-virtual.artifactory.renhsc.com/roos-httpd
+FROM httpd
 
 ARG DEPLOY_VERSION="v1"
 

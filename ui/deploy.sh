@@ -32,16 +32,6 @@ linkerd viz check
 echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Configuring the ingress controller for linkerd"
 kubectl get deployment nginx-ingress-ingress-nginx-controller -n default -o yaml | linkerd inject --ingress - | kubectl apply --record=true -f -
 
-echo "[INFO] $(date "+%Y-%m-%d %H:%M:%S") Setting up the split-test namespace"
-cat <<EOF | kubectl apply --record=true -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: split-test
-  annotations:
-    linkerd.io/inject: enabled
-EOF
-
 for _deploy_version in v1 v2 v3; do
     cat >"${DIR}/version_values.yaml" <<EOF
 image:

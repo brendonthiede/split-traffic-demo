@@ -35,16 +35,19 @@ spec:
             - name: https
               containerPort: 443
               protocol: TCP
+            - name: http
+              containerPort: 80
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /
-              port: https
-              scheme: HTTPS
+              port: http
+              scheme: HTTP
           readinessProbe:
             httpGet:
               path: /
-              port: https
-              scheme: HTTPS
+              port: http
+              scheme: HTTP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
